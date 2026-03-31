@@ -1,0 +1,86 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.8.1'
+        jdk 'JDK-21'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '📦 Pulling code from repository...'
+                checkout scm
+                echo '✅ Code checkout completed'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo '🔨 Building application...'
+                sh 'mvn clean compile'
+                echo '✅ Build completed'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo '🧪 Running unit tests...'
+                sh 'mvn test'
+                echo '✅ All tests passed'
+            }
+        }
+        
+        stage('Package') {
+            steps {
+                echo '📦 Packaging application...'
+                sh 'mvn package -DskipTests'
+                echo '✅ Package created'
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo '🚀 Deploying application...'
+                script {
+                    // 停止旧进程
+                    sh 'pkill -f "jenkins-demo.*.jar" || true'
+                    // 启动新应用
+                    sh 'nohup java -jar target/jenkins-demo-1.0.0.jar > app.log 2>&1 &'
+                    // 等待应用启动
+                    sh 'sleep 10'
+                }
+                echo '✅ Application deployed'
+            }
+        }
+        
+        stage('Verify') {
+            steps {
+                echo '🔍 Verifying deployment...'
+                script {
+                    def response = sh(script: 'curl -s http://localhost:8080/health', returnStdout: true).trim()
+                    if (response == 'OK') {
+                        echo '✅ Health check passed!'
+                    } else {
+                        error('Health check failed!')
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '🎉 Pipeline executed successfully!'
+            echo '🌐 Application is running at: http://localhost:8080'
+            sh 'curl -s http://localhost:8080'
+        }
+        failure {
+            echo '❌ Pipeline execution failed!'
+            echo 'Check logs for details'
+        }
+        always {
+            echo '🏁 Pipeline finished'
+        }
+    }
+}

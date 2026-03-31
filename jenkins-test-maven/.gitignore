@@ -20,7 +20,8 @@ target/
 *.ipr
 
 ### NetBeans ###
-/nbproject/private/
+/nbproject/
+private/
 /nbbuild/
 /dist/
 /nbdist/
@@ -31,5 +32,7 @@ build/
 
 ### VS Code ###
 .vscode/
-logs/
+
+### Logs ###
 *.log
+app.log
